@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Drive – PlaceReady{% endblock %}
+{% block breadcrumb %}Drives · {{ action }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ action }} Placement Drive</h1>
+  </div>
+  <a href="{{ url_for('admin.drives') }}" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="card form-card">
+  <form method="POST" class="auth-form" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      <label class="form-label">Company *</label>
+      {{ form.company_id(class="form-control form-select") }}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Drive Title *</label>
+      {{ form.title(class="form-control", placeholder="e.g. Amazon SDE Campus Drive 2026") }}
+      {% if form.title.errors %}<div class="form-error">{{ form.title.errors[0] }}</div>{% endif %}
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Drive Date *</label>
+        {{ form.drive_date(class="form-control") }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Registration Deadline *</label>
+        {{ form.registration_deadline(class="form-control") }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        {{ form.status(class="form-control form-select") }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Venue / Mode *</label>
+      {{ form.venue(class="form-control", placeholder="Campus Placement Cell – Block A, Room 201") }}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Instructions</label>
+      {{ form.instructions(class="form-control", rows="4", placeholder="Bring college ID, 2 passport photos, resume (10 copies)…") }}
+    </div>
+    <div class="form-submit-row">
+      <a href="{{ url_for('admin.drives') }}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary"><i class="bi bi-check2-circle"></i> {{ form.submit.label.text }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

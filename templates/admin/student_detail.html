@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ student.user.full_name }} – Admin Detail{% endblock %}
+{% block breadcrumb %}Students · {{ student.user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ student.user.full_name }}</h1>
+    <p class="page-sub">{{ student.roll_number }} · {{ student.department }} · {{ student.year }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.students') }}" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    <span class="status-badge status-{{ result.status | replace(' ','_') | lower }}">{{ result.status }}</span>
+  </div>
+</div>
+
+<div class="detail-top-row">
+  <!-- Student Info Card -->
+  <div class="card detail-info-card">
+    <div class="detail-avatar">{{ student.user.full_name[0] }}</div>
+    <h2 class="detail-name">{{ student.user.full_name }}</h2>
+    <p class="detail-email">{{ student.user.email }}</p>
+    <div class="detail-score-big">{{ result.total_score }}<span>/100</span></div>
+    <div class="detail-info-grid">
+      <div class="di-row"><span>CGPA</span><strong>{{ student.cgpa }}</strong></div>
+      <div class="di-row"><span>Backlogs</span><strong class="{{ 'text-danger' if student.backlogs > 0 else 'text-success' }}">{{ student.backlogs }}</strong></div>
+      <div class="di-row"><span>10th %</span><strong>{{ student.tenth_percent }}%</strong></div>
+      <div class="di-row"><span>12th %</span><strong>{{ student.twelfth_percent }}%</strong></div>
+      <div class="di-row"><span>Problems</span><strong>{{ student.coding_problems_count }}</strong></div>
+      <div class="di-row"><span>Platform</span><strong>{{ student.coding_platform }}</strong></div>
+      <div class="di-row"><span>Projects</span><strong>{{ student.projects_count }}</strong></div>
+      <div class="di-row"><span>Internships</span><strong>{{ student.internships_count }}</strong></div>
+      <div class="di-row"><span>Certifications</span><strong>{{ student.certifications_count }}</strong></div>
+      <div class="di-row"><span>Aptitude</span><strong>{{ student.aptitude_score }}%</strong></div>
+      <div class="di-row"><span>Mock Interview</span><strong>{{ student.mock_interview_score }}%</strong></div>
+      <div class="di-row"><span>Communication</span><strong>{{ student.communication_score }}/10</strong></div>
+    </div>
+    <div class="detail-skills">
+      {% for sk in student.skills %}<span class="skill-tag">{{ sk }}</span>{% endfor %}
+    </div>
+    <div class="detail-links">
+      {% if student.github_url %}<a href="{{ student.github_url }}" target="_blank" class="link-icon"><i class="bi bi-github"></i> GitHub</a>{% endif %}
+      {% if student.linkedin_url %}<a href="{{ student.linkedin_url }}" target="_blank" class="link-icon"><i class="bi bi-linkedin"></i> LinkedIn</a>{% endif %}
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="detail-charts-col">
+    <div class="card chart-card">
+      <div class="card-header-row">
+        <h3 class="card-title"><i class="bi bi-pentagon-fill text-indigo"></i> Radar Chart</h3>
+      </div>
+      <div class="chart-container" style="max-height:260px;">
+        <canvas id="radarChartAdmin"></canvas>
+      </div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-header-row">
+        <h3 class="card-title"><i class="bi bi-graph-up-arrow text-teal"></i> Score History</h3>
+      </div>
+      <div class="chart-container" style="max-height:220px;">
+        <canvas id="historyChartAdmin"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Category Bars -->
+<div class="card">
+  <div class="card-header-row"><h3 class="card-title"><i class="bi bi-bar-chart-fill text-indigo"></i> Category Scores</h3></div>
+  <div class="category-list">
+    {% set cats = [
+      ('academics',    'Academics & Eligibility',   'bi-mortarboard-fill', '#4F46E5'),
+      ('technical',    'Technical & Coding',         'bi-code-slash',        '#14B8A6'),
+      ('experience',   'Projects & Experience',      'bi-folder-fill',       '#8B5CF6'),
+      ('aptitude',     'Aptitude & Reasoning',       'bi-calculator-fill',   '#F59E0B'),
+      ('communication','Communication & Interview',  'bi-chat-quote-fill',   '#EF4444'),
+    ] %}
+    {% for key, label, icon, color in cats %}
+    {% set cat = result.categories[key] %}
+    <div class="cat-row">
+      <div class="cat-icon" style="background:{{ color }}15;color:{{ color }}"><i class="bi {{ icon }}"></i></div>
+      <div class="cat-info">
+        <div class="cat-label-row">
+          <span class="cat-label">{{ label }} ({{ cat.weight }}%)</span>
+          <span class="cat-score">{{ cat.score }}/100</span>
+        </div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width:{{ cat.score }}%;background:{{ color }}"></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Eligibility Table -->
+<div class="card">
+  <div class="card-header-row"><h3 class="card-title"><i class="bi bi-building-check text-teal"></i> Company Eligibility</h3></div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr><th>Company</th><th>Role</th><th>Package</th><th>Min CGPA</th><th>Max Backlogs</th><th>Eligibility</th></tr>
+      </thead>
+      <tbody>
+        {% for item in eligibility %}
+        <tr>
+          <td><strong>{{ item.company.name }}</strong></td>
+          <td>{{ item.company.role_offered }}</td>
+          <td>₹{{ item.company.package_lpa }} LPA</td>
+          <td>{{ item.company.min_cgpa }}</td>
+          <td>{{ item.company.max_backlogs }}</td>
+          <td>
+            {% if item.is_eligible %}
+            <span class="badge-eligibility eligible"><i class="bi bi-patch-check-fill"></i> Eligible</span>
+            {% else %}
+            <span class="badge-eligibility not-eligible"><i class="bi bi-patch-exclamation-fill"></i> Not Eligible</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.RADAR_DATA = {
+  labels: ['Academics','Technical','Experience','Aptitude','Communication'],
+  scores: [
+    {{ result.categories.academics.score }},
+    {{ result.categories.technical.score }},
+    {{ result.categories.experience.score }},
+    {{ result.categories.aptitude.score }},
+    {{ result.categories.communication.score }}
+  ]
+};
+window.HISTORY_DATA = {
+  labels: [{% for h in history %}"{{ h.recorded_at.strftime('%d %b') }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  scores: [{% for h in history %}{{ h.total_score }}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+initAdminDetailCharts();
+</script>
+{% endblock %}

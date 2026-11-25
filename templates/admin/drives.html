@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Placement Drives – Admin{% endblock %}
+{% block breadcrumb %}Drives{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Placement Drives</h1>
+    <p class="page-sub">{{ drives|length }} drives scheduled</p>
+  </div>
+  <a href="{{ url_for('admin.add_drive') }}" class="btn-primary"><i class="bi bi-plus-circle-fill"></i> Schedule Drive</a>
+</div>
+
+{% if drives %}
+<div class="card table-card">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Drive Title</th>
+          <th>Company</th>
+          <th>Package</th>
+          <th>Drive Date</th>
+          <th>Deadline</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for drive in drives %}
+        <tr>
+          <td>
+            <div class="drive-title-cell">{{ drive.title }}</div>
+            <div class="text-muted-sm">{{ drive.venue }}</div>
+          </td>
+          <td><strong>{{ drive.company.name }}</strong></td>
+          <td>₹{{ drive.company.package_lpa }} LPA</td>
+          <td>{{ drive.drive_date.strftime('%d %b %Y') }}</td>
+          <td>{{ drive.registration_deadline.strftime('%d %b %Y') }}</td>
+          <td><span class="badge-status {{ drive.status | lower }}">{{ drive.status }}</span></td>
+          <td>
+            <div class="table-actions">
+              <a href="{{ url_for('admin.edit_drive', drive_id=drive.id) }}" class="btn-xs"><i class="bi bi-pencil-fill"></i> Edit</a>
+              <form method="POST" action="{{ url_for('admin.delete_drive', drive_id=drive.id) }}" class="inline-form" onsubmit="return confirm('Delete this drive?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-xs btn-danger-xs"><i class="bi bi-trash-fill"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state-page">
+  <i class="bi bi-calendar-x"></i>
+  <h3>No drives scheduled</h3>
+  <a href="{{ url_for('admin.add_drive') }}" class="btn-primary">Schedule First Drive</a>
+</div>
+{% endif %}
+{% endblock %}

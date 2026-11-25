@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Student Placement Readiness{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
+      <div class="logo-text">
+        <span class="logo-title">PlaceReady</span>
+        <span class="logo-sub">Dashboard</span>
+      </div>
+    </div>
+    <button class="sidebar-close btn-icon" id="sidebarClose"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar-sm">{{ current_user.full_name[0].upper() }}</div>
+    <div>
+      <div class="sidebar-username">{{ current_user.full_name.split()[0] }}</div>
+      <div class="sidebar-role badge-role-{{ current_user.role }}">{{ 'Admin' if current_user.is_admin else 'Student' }}</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% if current_user.is_student %}
+    <div class="nav-section-label">Student Portal</div>
+    <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('student.edit_profile') }}" class="nav-link {% if request.endpoint == 'student.edit_profile' %}active{% endif %}">
+      <i class="bi bi-person-fill"></i><span>My Profile</span>
+    </a>
+    <a href="{{ url_for('student.drives') }}" class="nav-link {% if request.endpoint == 'student.drives' %}active{% endif %}">
+      <i class="bi bi-briefcase-fill"></i><span>Placement Drives</span>
+    </a>
+    {% endif %}
+
+    {% if current_user.is_admin %}
+    <div class="nav-section-label">Admin Panel</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('admin.students') }}" class="nav-link {% if request.endpoint in ['admin.students','admin.student_detail'] %}active{% endif %}">
+      <i class="bi bi-people-fill"></i><span>Students</span>
+    </a>
+    <a href="{{ url_for('admin.companies') }}" class="nav-link {% if request.endpoint and ('admin.companies' in request.endpoint or 'admin.add_company' in request.endpoint or 'admin.edit_company' in request.endpoint) %}active{% endif %}">
+      <i class="bi bi-building-fill"></i><span>Companies</span>
+    </a>
+    <a href="{{ url_for('admin.drives') }}" class="nav-link {% if request.endpoint and ('admin.drives' in request.endpoint or 'admin.add_drive' in request.endpoint or 'admin.edit_drive' in request.endpoint) %}active{% endif %}">
+      <i class="bi bi-calendar-event-fill"></i><span>Drives</span>
+    </a>
+    <div class="nav-section-label">Reports</div>
+    <a href="{{ url_for('admin.export_csv') }}" class="nav-link">
+      <i class="bi bi-filetype-csv"></i><span>Export CSV</span>
+    </a>
+    <a href="{{ url_for('admin.export_pdf') }}" class="nav-link">
+      <i class="bi bi-file-earmark-pdf-fill"></i><span>Export PDF</span>
+    </a>
+    {% endif %}
+
+    <div class="nav-section-label">Account</div>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link-danger">
+      <i class="bi bi-box-arrow-left"></i><span>Sign Out</span>
+    </a>
+  </nav>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ═══════════════════════════ MAIN WRAPPER ═══════════════════════════ -->
+<div class="main-wrapper" id="mainWrapper">
+  <!-- TOP NAV -->
+  <header class="topnav">
+    <div class="topnav-left">
+      <button class="btn-icon sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb-custom">
+          <li><a href="{{ url_for('index') }}"><i class="bi bi-house-fill"></i></a></li>
+          <li class="sep">/</li>
+          <li>{% block breadcrumb %}Home{% endblock %}</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="topnav-right">
+      <button class="btn-icon dark-toggle" id="darkToggle" title="Toggle dark mode">
+        <i class="bi bi-moon-stars-fill" id="darkIcon"></i>
+      </button>
+      <div class="topnav-avatar" title="{{ current_user.full_name }}">
+        {{ current_user.full_name[0].upper() }}
+      </div>
+      <span class="topnav-name d-none-sm">{{ current_user.full_name }}</span>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="page-content">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container" id="flashContainer">
+      {% for category, message in messages %}
+      <div class="flash flash-{{ category }}" role="alert">
+        <i class="bi {% if category == 'success' %}bi-check-circle-fill{% elif category == 'danger' %}bi-exclamation-octagon-fill{% elif category == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+        <span>{{ message }}</span>
+        <button class="flash-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+{% else %}
+<!-- Public pages (no sidebar) -->
+<div class="public-wrapper">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container" id="flashContainer" style="position:fixed;top:1rem;right:1rem;z-index:9999;max-width:420px;">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}" role="alert">
+      <i class="bi {% if category == 'success' %}bi-check-circle-fill{% elif category == 'danger' %}bi-exclamation-octagon-fill{% elif category == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+      <span>{{ message }}</span>
+      <button class="flash-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+  {{ self.content() }}
+</div>
+{% endif %}
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

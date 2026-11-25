@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Company – PlaceReady{% endblock %}
+{% block breadcrumb %}Companies · {{ action }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ action }} Company</h1>
+    <p class="page-sub">{{ 'Fill in company and recruitment details.' if action == 'Add' else 'Update company information.' }}</p>
+  </div>
+  <a href="{{ url_for('admin.companies') }}" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="card form-card">
+  <form method="POST" class="auth-form" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Company Name *</label>
+        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="e.g. Amazon") }}
+        {% if form.name.errors %}<div class="form-error">{{ form.name.errors[0] }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Industry / Sector *</label>
+        {{ form.industry(class="form-control", placeholder="e.g. Product / Cloud") }}
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Role Offered *</label>
+        {{ form.role_offered(class="form-control", placeholder="e.g. Software Development Engineer - 1") }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">CTC Package (LPA) *</label>
+        {{ form.package_lpa(class="form-control", placeholder="14.5", step="0.5") }}
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Min CGPA *</label>
+        {{ form.min_cgpa(class="form-control", placeholder="7.5", step="0.5") }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max Backlogs *</label>
+        {{ form.max_backlogs(class="form-control", placeholder="0") }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Job Location *</label>
+        {{ form.location(class="form-control", placeholder="Bangalore / Remote") }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Required Skills (comma-separated)</label>
+      {{ form.required_skills(class="form-control", placeholder="Python, SQL, DSA, System Design") }}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Company Website</label>
+      {{ form.website(class="form-control", placeholder="https://careers.company.com") }}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Role Description</label>
+      {{ form.description(class="form-control", rows="4", placeholder="Brief description of the role and selection process…") }}
+    </div>
+    <div class="form-submit-row">
+      <a href="{{ url_for('admin.companies') }}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary"><i class="bi bi-check2-circle"></i> {{ form.submit.label.text }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

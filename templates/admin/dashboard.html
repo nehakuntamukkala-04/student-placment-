@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard – PlaceReady{% endblock %}
+{% block breadcrumb %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Placement Analytics Console</h1>
+    <p class="page-sub">Real-time overview of campus placement readiness.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.export_csv') }}" class="btn-secondary"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+    <a href="{{ url_for('admin.export_pdf') }}" class="btn-primary"><i class="bi bi-file-earmark-pdf-fill"></i> Export PDF</a>
+  </div>
+</div>
+
+<!-- ── KPI Cards ──────────────────────────────────────────────────── -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-icon bg-indigo"><i class="bi bi-people-fill"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-num counter" data-target="{{ stats.total_students }}">0</div>
+      <div class="kpi-label">Total Students</div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon bg-teal"><i class="bi bi-graph-up-arrow"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-num counter" data-target="{{ stats.avg_score }}">0</div>
+      <div class="kpi-label">Avg Readiness Score</div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon bg-green"><i class="bi bi-patch-check-fill"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-num counter" data-target="{{ stats.ready_count }}">0</div>
+      <div class="kpi-label">Placement Ready</div>
+      <div class="kpi-sub">{{ stats.ready_pct }}% of cohort</div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon bg-rose"><i class="bi bi-exclamation-triangle-fill"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-num counter" data-target="{{ stats.at_risk_count }}">0</div>
+      <div class="kpi-label">At-Risk Students</div>
+      <div class="kpi-sub">Score &lt; 40</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts Row 1 ───────────────────────────────────────────────── -->
+<div class="admin-charts-row">
+  <div class="card chart-card-lg">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-bar-chart-fill text-indigo"></i> Department-wise Readiness</h3>
+    </div>
+    <div class="chart-container" style="max-height:300px;">
+      <canvas id="deptChart"></canvas>
+    </div>
+  </div>
+  <div class="card chart-card-sm">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-pie-chart-fill text-teal"></i> Status Distribution</h3>
+    </div>
+    <div class="chart-container" style="max-height:300px;">
+      <canvas id="statusChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts Row 2 ───────────────────────────────────────────────── -->
+<div class="admin-charts-row">
+  <div class="card chart-card-sm">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-code-slash text-violet"></i> Top Skills</h3>
+    </div>
+    <div class="chart-container" style="max-height:300px;">
+      <canvas id="skillsChart"></canvas>
+    </div>
+  </div>
+  <div class="card chart-card-lg">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-table text-indigo"></i> Department Performance Table</h3>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Students</th>
+            <th>Avg CGPA</th>
+            <th>Avg Score</th>
+            <th>Ready</th>
+            <th>Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dept_stats %}
+          <tr>
+            <td><strong>{{ d.name }}</strong></td>
+            <td>{{ d.count }}</td>
+            <td>{{ d.avg_cgpa }}</td>
+            <td>
+              <div class="inline-score">
+                <div class="mini-bar"><div style="width:{{ d.avg_score }}%;background:#4F46E5"></div></div>
+                <span>{{ d.avg_score }}%</span>
+              </div>
+            </td>
+            <td>{{ d.ready_count }}</td>
+            <td>
+              <span class="pct-badge {% if d.ready_rate >= 60 %}pct-green{% elif d.ready_rate >= 30 %}pct-yellow{% else %}pct-red{% endif %}">{{ d.ready_rate }}%</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Top Performers + At-Risk ───────────────────────────────────── -->
+<div class="admin-lists-row">
+  <!-- Leaderboard -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-trophy-fill text-gold"></i> Top Performers</h3>
+      <a href="{{ url_for('admin.students') }}?sort=score_desc" class="card-link">View all <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="leaderboard">
+      {% for s in top_students %}
+      <div class="leader-row">
+        <div class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</div>
+        <div class="leader-avatar">{{ s.user.full_name[0] }}</div>
+        <div class="leader-info">
+          <div class="leader-name">{{ s.user.full_name }}</div>
+          <div class="leader-dept">{{ s.department }}</div>
+        </div>
+        <div class="leader-score">
+          <span class="score-pill ready">{{ s.current_readiness_score }}%</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- At-Risk -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-exclamation-octagon-fill text-danger"></i> At-Risk Students</h3>
+      <a href="{{ url_for('admin.students') }}?status=Not+Ready" class="card-link">View all <i class="bi bi-arrow-right"></i></a>
+    </div>
+    {% if at_risk %}
+    <div class="at-risk-list">
+      {% for s in at_risk %}
+      <a href="{{ url_for('admin.student_detail', student_id=s.id) }}" class="at-risk-row">
+        <div class="at-risk-avatar">{{ s.user.full_name[0] }}</div>
+        <div class="at-risk-info">
+          <div class="at-risk-name">{{ s.user.full_name }}</div>
+          <div class="at-risk-meta">{{ s.roll_number }} · {{ s.department }}</div>
+        </div>
+        <div class="at-risk-score">{{ s.current_readiness_score }}%</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-emoji-smile"></i><p>No at-risk students. Excellent!</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Drives -->
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-calendar-event-fill text-violet"></i> Upcoming Drives</h3>
+      <a href="{{ url_for('admin.drives') }}" class="card-link">Manage <i class="bi bi-arrow-right"></i></a>
+    </div>
+    {% if upcoming_drives %}
+    <div class="drives-list">
+      {% for drive in upcoming_drives %}
+      <div class="drive-row">
+        <div class="drive-date-badge">
+          <span class="drive-day">{{ drive.drive_date.strftime('%d') }}</span>
+          <span class="drive-mon">{{ drive.drive_date.strftime('%b') }}</span>
+        </div>
+        <div class="drive-info">
+          <div class="drive-title">{{ drive.company.name }}</div>
+          <div class="drive-company">{{ drive.company.role_offered }} · ₹{{ drive.company.package_lpa }} LPA</div>
+        </div>
+        <span class="badge-status open">{{ drive.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-calendar-x"></i><p>No drives yet. <a href="{{ url_for('admin.add_drive') }}">Add one</a>.</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.ADMIN_DEPT_DATA = {
+  labels: [{% for d in dept_stats %}"{{ d.name | truncate(18, True, '…') }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  avg_scores: [{% for d in dept_stats %}{{ d.avg_score }}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+window.ADMIN_STATUS_DATA = {
+  labels: ['Placement Ready','Almost Ready','Developing','Not Ready'],
+  counts: [{{ status_counts.ready }},{{ status_counts.almost }},{{ status_counts.developing }},{{ status_counts.not_ready }}]
+};
+window.ADMIN_SKILLS_DATA = {
+  labels: [{% for sk, cnt in top_skills %}"{{ sk }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  counts: [{% for sk, cnt in top_skills %}{{ cnt }}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+document.querySelectorAll('.counter').forEach(el => {
+  animateCounter(el, parseFloat(el.dataset.target));
+});
+initAdminCharts();
+</script>
+{% endblock %}

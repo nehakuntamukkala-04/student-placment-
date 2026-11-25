@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Placement Drives – PlaceReady{% endblock %}
+{% block breadcrumb %}Placement Drives{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Placement Drives</h1>
+    <p class="page-sub">All upcoming and completed recruitment drives on campus.</p>
+  </div>
+</div>
+
+<div class="drives-filter-row">
+  <span class="filter-chip active" onclick="filterDrives('all',this)">All</span>
+  <span class="filter-chip" onclick="filterDrives('Upcoming',this)">Upcoming</span>
+  <span class="filter-chip" onclick="filterDrives('Completed',this)">Completed</span>
+</div>
+
+{% if drives_info %}
+<div class="drives-cards-grid" id="drivesGrid">
+  {% for item in drives_info %}
+  <div class="drive-card" data-status="{{ item.drive.status }}">
+    <div class="drive-card-header">
+      <div class="drive-company-logo">{{ item.drive.company.name[0] }}</div>
+      <div class="drive-card-meta">
+        <div class="drive-card-company">{{ item.drive.company.name }}</div>
+        <div class="drive-card-role">{{ item.drive.company.role_offered }}</div>
+      </div>
+      <span class="drive-status-pill {{ item.drive.status | lower }}">{{ item.drive.status }}</span>
+    </div>
+
+    <h3 class="drive-card-title">{{ item.drive.title }}</h3>
+
+    <div class="drive-card-details">
+      <div class="drive-detail"><i class="bi bi-calendar3"></i><span>Drive Date: <strong>{{ item.drive.drive_date.strftime('%d %b %Y') }}</strong></span></div>
+      <div class="drive-detail"><i class="bi bi-clock-history"></i><span>Deadline: <strong>{{ item.drive.registration_deadline.strftime('%d %b %Y') }}</strong></span></div>
+      <div class="drive-detail"><i class="bi bi-geo-alt-fill"></i><span>{{ item.drive.venue }}</span></div>
+      <div class="drive-detail"><i class="bi bi-currency-rupee"></i><span><strong>₹{{ item.drive.company.package_lpa }} LPA</strong></span></div>
+      <div class="drive-detail"><i class="bi bi-graph-up"></i><span>Min CGPA: {{ item.drive.company.min_cgpa }}</span></div>
+      <div class="drive-detail"><i class="bi bi-x-circle"></i><span>Max Backlogs: {{ item.drive.company.max_backlogs }}</span></div>
+    </div>
+
+    {% if item.drive.company.required_skills %}
+    <div class="drive-skills">
+      {% for sk in item.drive.company.required_skills[:5] %}
+      <span class="skill-tag">{{ sk }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="drive-card-footer">
+      {% if item.drive.status == 'Completed' %}
+      <span class="drive-action-info"><i class="bi bi-check-all"></i> Drive Completed</span>
+      {% elif item.applied %}
+      <span class="drive-action-info applied"><i class="bi bi-check-circle-fill"></i> Applied – {{ item.app_status }}</span>
+      {% elif item.is_open %}
+        {% if item.is_eligible %}
+        <form method="POST" action="{{ url_for('student.apply_drive', drive_id=item.drive.id) }}" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-apply">
+            <i class="bi bi-send-fill"></i> Apply Now
+          </button>
+        </form>
+        {% else %}
+        <span class="drive-action-info not-eligible"><i class="bi bi-lock-fill"></i> Not Eligible</span>
+        {% endif %}
+      {% else %}
+      <span class="drive-action-info"><i class="bi bi-clock"></i> Registration Closed</span>
+      {% endif %}
+
+      <div class="eligibility-badge {{ 'eligible' if item.is_eligible else 'not-eligible' }}">
+        <i class="bi {{ 'bi-patch-check-fill' if item.is_eligible else 'bi-patch-exclamation-fill' }}"></i>
+        {{ 'Eligible' if item.is_eligible else 'Not Eligible' }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-page">
+  <i class="bi bi-calendar-x"></i>
+  <h3>No drives available</h3>
+  <p>Check back soon — the placement cell will announce upcoming drives here.</p>
+</div>
+{% endif %}
+
+<script>
+function filterDrives(status, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.drive-card').forEach(card => {
+    card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

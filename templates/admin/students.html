@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Students – PlaceReady Admin{% endblock %}
+{% block breadcrumb %}Students{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">All Students</h1>
+    <p class="page-sub">{{ pagination.total }} students · Page {{ pagination.page }} of {{ pagination.pages }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.export_csv') }}" class="btn-secondary"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<form method="GET" action="{{ url_for('admin.students') }}" class="filter-form card">
+  <div class="filter-row">
+    <div class="search-wrap">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" name="search" value="{{ search }}" placeholder="Search by name, roll number or email…" class="search-input"/>
+    </div>
+    <select name="dept" class="form-control form-select filter-select">
+      <option value="">All Departments</option>
+      {% for d in departments %}
+      <option value="{{ d }}" {{ 'selected' if d == dept_filter }}>{{ d }}</option>
+      {% endfor %}
+    </select>
+    <select name="year" class="form-control form-select filter-select">
+      <option value="">All Years</option>
+      {% for y in years %}
+      <option value="{{ y }}" {{ 'selected' if y == year_filter }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="form-control form-select filter-select">
+      <option value="">All Statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {{ 'selected' if s == status_filter }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" class="form-control form-select filter-select">
+      <option value="score_desc" {{ 'selected' if sort_by == 'score_desc' }}>Score ↓</option>
+      <option value="score_asc" {{ 'selected' if sort_by == 'score_asc' }}>Score ↑</option>
+      <option value="cgpa_desc" {{ 'selected' if sort_by == 'cgpa_desc' }}>CGPA ↓</option>
+      <option value="name_asc" {{ 'selected' if sort_by == 'name_asc' }}>Name A-Z</option>
+    </select>
+    <button type="submit" class="btn-primary"><i class="bi bi-funnel-fill"></i> Filter</button>
+    <a href="{{ url_for('admin.students') }}" class="btn-secondary">Reset</a>
+  </div>
+</form>
+
+<!-- Students Table -->
+<div class="card table-card">
+  {% if students %}
+  <div class="table-scroll">
+    <table class="data-table students-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Roll</th>
+          <th>Dept / Year</th>
+          <th>CGPA</th>
+          <th>Backlogs</th>
+          <th>Problems</th>
+          <th>Score</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <div class="student-cell">
+              <div class="student-avatar-sm">{{ s.user.full_name[0] }}</div>
+              <div>
+                <div class="student-name-sm">{{ s.user.full_name }}</div>
+                <div class="student-email">{{ s.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="roll-mono">{{ s.roll_number }}</span></td>
+          <td>
+            <div>{{ s.department | truncate(20, True, '…') }}</div>
+            <div class="text-muted-sm">{{ s.year }}</div>
+          </td>
+          <td><strong>{{ s.cgpa }}</strong></td>
+          <td>
+            {% if s.backlogs > 0 %}
+            <span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> {{ s.backlogs }}</span>
+            {% else %}
+            <span class="text-success"><i class="bi bi-check-circle-fill"></i> 0</span>
+            {% endif %}
+          </td>
+          <td>{{ s.coding_problems_count }}</td>
+          <td>
+            <div class="score-cell">
+              <div class="score-mini-bar"><div style="width:{{ s.current_readiness_score }}%;background:#4F46E5"></div></div>
+              <span class="score-mini-num">{{ s.current_readiness_score }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge-sm status-{{ s.current_status | replace(' ','_') | lower }}">{{ s.current_status }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('admin.student_detail', student_id=s.id) }}" class="btn-xs"><i class="bi bi-eye-fill"></i> View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if pagination.pages > 1 %}
+  <div class="pagination-row">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.students', page=pagination.prev_num, search=search, dept=dept_filter, year=year_filter, status=status_filter, sort=sort_by) }}" class="page-btn"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    {% for pg in pagination.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+      {% if pg %}
+      <a href="{{ url_for('admin.students', page=pg, search=search, dept=dept_filter, year=year_filter, status=status_filter, sort=sort_by) }}" class="page-btn {{ 'active' if pg == pagination.page }}">{{ pg }}</a>
+      {% else %}
+      <span class="page-ellipsis">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.students', page=pagination.next_num, search=search, dept=dept_filter, year=year_filter, status=status_filter, sort=sort_by) }}" class="page-btn"><i class="bi bi-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-people"></i>
+    <p>No students match your filters. <a href="{{ url_for('admin.students') }}">Clear filters</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

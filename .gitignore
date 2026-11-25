@@ -1,0 +1,26 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Nested duplicate folder
+STUDENT PLACEMENT/
+
+# Uploads
+uploads/*
+
+# Environment & logs
+.env
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

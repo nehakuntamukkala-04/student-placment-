@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Sign In – PlaceReady{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
+      <div>
+        <div class="auth-logo-title">PlaceReady</div>
+        <div class="auth-logo-sub">Placement Readiness Dashboard</div>
+      </div>
+    </div>
+
+    <h2 class="auth-heading">Welcome back</h2>
+    <p class="auth-subheading">Sign in to view your readiness score and recommendations.</p>
+
+    <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        <label class="form-label" for="username_or_email">Username or Email</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-person-fill input-icon"></i>
+          {{ form.username_or_email(class="form-control" + (" is-invalid" if form.username_or_email.errors else ""), id="username_or_email", placeholder="Enter username or email") }}
+        </div>
+        {% if form.username_or_email.errors %}
+        <div class="form-error">{{ form.username_or_email.errors[0] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-lock-fill input-icon"></i>
+          {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="password", placeholder="Enter password") }}
+          <button type="button" class="input-icon-right btn-icon-sm" onclick="togglePwd('password')">
+            <i class="bi bi-eye-fill" id="eyeIcon-password"></i>
+          </button>
+        </div>
+        {% if form.password.errors %}
+        <div class="form-error">{{ form.password.errors[0] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-row-inline">
+        <label class="checkbox-label">
+          {{ form.remember_me() }} Remember me for 7 days
+        </label>
+      </div>
+
+      <button type="submit" class="btn-auth-submit">
+        <i class="bi bi-box-arrow-in-right"></i> Sign In
+      </button>
+    </form>
+
+    <div class="auth-divider">or sign in with demo accounts</div>
+    <div class="demo-creds">
+      <div class="demo-cred-card" onclick="fillDemo('admin','admin123')">
+        <i class="bi bi-shield-lock-fill"></i>
+        <div><strong>Admin</strong><br><small>admin / admin123</small></div>
+      </div>
+      <div class="demo-cred-card" onclick="fillDemo('student','student123')">
+        <i class="bi bi-person-circle"></i>
+        <div><strong>Student</strong><br><small>student / student123</small></div>
+      </div>
+    </div>
+
+    <p class="auth-footer-text">
+      Don't have an account? <a href="{{ url_for('auth.register') }}">Create one free</a>
+    </p>
+  </div>
+</div>
+
+<script>
+function fillDemo(user, pwd) {
+  document.getElementById('username_or_email').value = user;
+  document.getElementById('password').value = pwd;
+}
+function togglePwd(id) {
+  const inp = document.getElementById(id);
+  const icon = document.getElementById('eyeIcon-' + id);
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'bi bi-eye-slash-fill'; }
+  else { inp.type = 'password'; icon.className = 'bi bi-eye-fill'; }
+}
+</script>
+{% endblock %}

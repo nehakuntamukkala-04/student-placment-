@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Server Error – PlaceReady{% endblock %}
+{% block content %}
+<div class="error-page" style="text-align:center;padding:60px 20px;">
+  <div class="error-code" style="font-size:72px;font-weight:900;color:#ef4444;line-height:1;">500</div>
+  <div class="error-emoji" style="font-size:48px;margin:16px 0;">⚠️</div>
+  <h1 class="error-title" style="font-size:26px;font-weight:800;color:var(--text-main);margin-bottom:8px;">Internal Server Error</h1>
+  <p class="error-sub" style="font-size:14px;color:var(--text-muted);margin-bottom:24px;">An unexpected error occurred. The team has been notified.</p>
+  <div class="error-actions" style="display:flex;justify-content:center;gap:12px;">
+    <a href="javascript:history.back()" class="btn-secondary"><i class="bi bi-arrow-left"></i> Go Back</a>
+    <a href="{{ url_for('index') }}" class="btn-primary"><i class="bi bi-house-fill"></i> Home</a>
+  </div>
+</div>
+{% endblock %}

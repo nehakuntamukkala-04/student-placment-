@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Create Account – PlaceReady{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card auth-card-wide">
+    <div class="auth-logo">
+      <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
+      <div>
+        <div class="auth-logo-title">PlaceReady</div>
+        <div class="auth-logo-sub">Create Your Account</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <!-- Role Selector -->
+      <div class="form-group">
+        <label class="form-label">Account Type</label>
+        <div class="role-selector" id="roleSelector">
+          <label class="role-option" id="roleStudent">
+            <input type="radio" name="role" value="student" checked onchange="onRoleChange(this)"/>
+            <i class="bi bi-person-fill"></i>
+            <span>Student</span>
+          </label>
+          <label class="role-option" id="roleAdmin">
+            <input type="radio" name="role" value="admin" onchange="onRoleChange(this)"/>
+            <i class="bi bi-shield-fill"></i>
+            <span>Admin / Officer</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-person-fill input-icon"></i>
+            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), placeholder="e.g. Aditya Sharma") }}
+          </div>
+          {% if form.full_name.errors %}<div class="form-error">{{ form.full_name.errors[0] }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-at input-icon"></i>
+            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="e.g. aditya_sharma") }}
+          </div>
+          {% if form.username.errors %}<div class="form-error">{{ form.username.errors[0] }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <div class="input-icon-wrap">
+          <i class="bi bi-envelope-fill input-icon"></i>
+          {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@college.edu") }}
+        </div>
+        {% if form.email.errors %}<div class="form-error">{{ form.email.errors[0] }}</div>{% endif %}
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock-fill input-icon"></i>
+            {{ form.password(class="form-control", placeholder="Min 6 characters") }}
+          </div>
+          {% if form.password.errors %}<div class="form-error">{{ form.password.errors[0] }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock-fill input-icon"></i>
+            {{ form.confirm_password(class="form-control", placeholder="Repeat password") }}
+          </div>
+          {% if form.confirm_password.errors %}<div class="form-error">{{ form.confirm_password.errors[0] }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Student-only fields -->
+      <div id="studentFields">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Roll Number</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-123 input-icon"></i>
+              {{ form.roll_number(class="form-control", placeholder="e.g. 2026CS042") }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-phone-fill input-icon"></i>
+              {{ form.phone(class="form-control", placeholder="10-digit mobile") }}
+            </div>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            {{ form.department(class="form-control form-select") }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year of Study</label>
+            {{ form.year(class="form-control form-select") }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin secret key (hidden by default) -->
+      <div id="adminKeyField" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Admin Secret Key</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-key-fill input-icon"></i>
+            {{ form.admin_secret_key(class="form-control", placeholder="Enter admin passcode") }}
+          </div>
+          <div class="form-hint">Ask your placement coordinator for the admin passcode. <em>(Demo: ADMIN2026)</em></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-auth-submit">
+        <i class="bi bi-person-plus-fill"></i> Create Account
+      </button>
+    </form>
+
+    <p class="auth-footer-text">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in here</a>
+    </p>
+  </div>
+</div>
+
+<script>
+function onRoleChange(radio) {
+  const isAdmin = radio.value === 'admin';
+  document.getElementById('studentFields').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('adminKeyField').style.display = isAdmin ? 'block' : 'none';
+  document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+  radio.closest('.role-option').classList.add('selected');
+}
+// Set initial state
+document.querySelectorAll('input[name="role"]').forEach(r => {
+  if (r.checked) r.closest('.role-option').classList.add('selected');
+  r.addEventListener('change', function() { onRoleChange(this); });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard – PlaceReady{% endblock %}
+{% block breadcrumb %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Readiness Dashboard</h1>
+    <p class="page-sub">{{ student.department }} · {{ student.year }} · Roll: {{ student.roll_number }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('student.edit_profile') }}" class="btn-secondary"><i class="bi bi-pencil-fill"></i> Edit Profile</a>
+    <a href="{{ url_for('student.drives') }}" class="btn-primary"><i class="bi bi-briefcase-fill"></i> View Drives</a>
+  </div>
+</div>
+
+<!-- ── ROW 1: Score ring + category bars ───────────────────────────────── -->
+<div class="dash-row-top">
+
+  <!-- Score Hero Card -->
+  <div class="card score-hero-card">
+    <div class="score-ring-wrap">
+      <svg class="score-ring" viewBox="0 0 160 160" id="scoreRingSvg">
+        <circle class="ring-bg" cx="80" cy="80" r="66"/>
+        <circle class="ring-fill" cx="80" cy="80" r="66"
+          id="ringFill"
+          stroke="{{ result.color }}"
+          stroke-dasharray="414.7"
+          stroke-dashoffset="414.7"
+          data-score="{{ result.total_score }}"/>
+      </svg>
+      <div class="score-center">
+        <div class="score-num" id="scoreNum" data-target="{{ result.total_score }}">0</div>
+        <div class="score-label">/100</div>
+      </div>
+    </div>
+    <div class="score-info">
+      <span class="status-badge status-{{ result.status | replace(' ','_') | lower }}">{{ result.status }}</span>
+      <p class="score-student-name">{{ student.user.full_name }}</p>
+      <div class="score-meta-row">
+        <span><i class="bi bi-award-fill text-gold"></i> CGPA {{ student.cgpa }}</span>
+        {% if student.backlogs > 0 %}
+        <span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> {{ student.backlogs }} Backlog{{ 's' if student.backlogs > 1 }}</span>
+        {% else %}
+        <span class="text-success"><i class="bi bi-check-circle-fill"></i> No Backlogs</span>
+        {% endif %}
+      </div>
+      <div class="score-meta-row">
+        <span><i class="bi bi-code-slash text-indigo"></i> {{ student.coding_problems_count }} Problems</span>
+        <span><i class="bi bi-folder-fill text-teal"></i> {{ student.projects_count }} Projects</span>
+      </div>
+      <div class="dept-compare">
+        <span class="dept-compare-label">Your Score vs Dept Avg</span>
+        <div class="dept-compare-bars">
+          <div class="compare-bar-row">
+            <span>You</span>
+            <div class="compare-bar-track">
+              <div class="compare-bar-fill bg-indigo" style="width:{{ result.total_score }}%"></div>
+            </div>
+            <span>{{ result.total_score }}%</span>
+          </div>
+          <div class="compare-bar-row">
+            <span>Dept</span>
+            <div class="compare-bar-track">
+              <div class="compare-bar-fill bg-teal" style="width:{{ dept_avg }}%"></div>
+            </div>
+            <span>{{ dept_avg }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="card category-card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-bar-chart-fill text-indigo"></i> Category Breakdown</h3>
+    </div>
+    <div class="category-list">
+      {% set cats = [
+        ('academics',    'Academics & Eligibility',    'bi-mortarboard-fill', '#4F46E5'),
+        ('technical',    'Technical & Coding',         'bi-code-slash',        '#14B8A6'),
+        ('experience',   'Projects & Experience',      'bi-folder-fill',       '#8B5CF6'),
+        ('aptitude',     'Aptitude & Reasoning',       'bi-calculator-fill',   '#F59E0B'),
+        ('communication','Communication & Interview',  'bi-chat-quote-fill',   '#EF4444'),
+      ] %}
+      {% for key, label, icon, color in cats %}
+      {% set cat = result.categories[key] %}
+      <div class="cat-row">
+        <div class="cat-icon" style="background:{{ color }}15;color:{{ color }}">
+          <i class="bi {{ icon }}"></i>
+        </div>
+        <div class="cat-info">
+          <div class="cat-label-row">
+            <span class="cat-label">{{ label }}</span>
+            <span class="cat-score">{{ cat.score }}<span class="cat-weight"> · {{ cat.weight }}%</span></span>
+          </div>
+          <div class="cat-bar-track">
+            <div class="cat-bar-fill" style="width:{{ cat.score }}%;background:{{ color }}"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── ROW 2: Radar + Line chart ───────────────────────────────────────── -->
+<div class="dash-row-charts">
+  <div class="card chart-card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-pentagon-fill text-indigo"></i> Skill Radar</h3>
+    </div>
+    <div class="chart-container" style="max-height:280px;">
+      <canvas id="radarChart"></canvas>
+    </div>
+  </div>
+  <div class="card chart-card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-graph-up-arrow text-teal"></i> Score Progress</h3>
+    </div>
+    <div class="chart-container" style="max-height:280px;">
+      <canvas id="progressChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROW 3: Recommendations ─────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header-row">
+    <h3 class="card-title"><i class="bi bi-lightbulb-fill text-gold"></i> Personalised Recommendations</h3>
+    <span class="badge-count">{{ recommendations|length }} actions</span>
+  </div>
+  {% if recommendations %}
+  <div class="reco-grid">
+    {% for rec in recommendations %}
+    <div class="reco-card reco-{{ rec.priority }}">
+      <div class="reco-top">
+        <div class="reco-icon"><i class="bi bi-{{ rec.icon }}"></i></div>
+        <div>
+          <div class="reco-title">{{ rec.title }}</div>
+          <div class="reco-meta">
+            <span class="reco-cat">{{ rec.category }}</span>
+            <span class="reco-impact">{{ rec.impact }}</span>
+          </div>
+        </div>
+        <span class="priority-dot priority-{{ rec.priority }}"></span>
+      </div>
+      <p class="reco-desc">{{ rec.description }}</p>
+      <a href="{{ rec.action_url }}" class="reco-action" target="{{ '_blank' if rec.action_url.startswith('http') else '_self' }}">
+        {{ rec.action_label }} <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-stars"></i>
+    <p>You're in excellent shape! No critical gaps found.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── ROW 4: Eligible Companies + Upcoming Drives ────────────────────── -->
+<div class="dash-row-bottom">
+
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-building-check text-teal"></i> Companies You Qualify For</h3>
+      <span class="badge-count">{{ eligible_companies|length }}</span>
+    </div>
+    {% if eligible_companies %}
+    <div class="company-list">
+      {% for item in eligible_companies %}
+      <div class="company-row">
+        <div class="company-logo-ph">{{ item.company.name[0] }}</div>
+        <div class="company-info">
+          <div class="company-name">{{ item.company.name }}</div>
+          <div class="company-role">{{ item.company.role_offered }}</div>
+          <div class="company-skills">
+            {% for sk in item.details.matched_skills[:3] %}<span class="skill-tag">{{ sk }}</span>{% endfor %}
+          </div>
+        </div>
+        <div class="company-pkg">₹{{ item.company.package_lpa }} LPA</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-building-x"></i>
+      <p>No companies match your current profile. Improve your score to unlock eligibility.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header-row">
+      <h3 class="card-title"><i class="bi bi-calendar-event-fill text-violet"></i> Upcoming Drives</h3>
+    </div>
+    {% if upcoming_drives %}
+    <div class="drives-list">
+      {% for drive in upcoming_drives %}
+      <div class="drive-row">
+        <div class="drive-date-badge">
+          <span class="drive-day">{{ drive.drive_date.strftime('%d') }}</span>
+          <span class="drive-mon">{{ drive.drive_date.strftime('%b') }}</span>
+        </div>
+        <div class="drive-info">
+          <div class="drive-title">{{ drive.title }}</div>
+          <div class="drive-company">{{ drive.company.name }} · {{ drive.company.role_offered }}</div>
+          <div class="drive-pkg">₹{{ drive.company.package_lpa }} LPA</div>
+        </div>
+        <div>
+          {% if drive.is_registration_open() %}
+          <span class="badge-status open">Open</span>
+          {% else %}
+          <span class="badge-status closed">Closed</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('student.drives') }}" class="card-link">View all drives <i class="bi bi-arrow-right"></i></a>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-calendar-x"></i>
+      <p>No upcoming drives scheduled yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pass score data to charts.js
+window.STUDENT_SCORE = {{ result.total_score }};
+window.RADAR_DATA = {
+  labels: ['Academics', 'Technical', 'Experience', 'Aptitude', 'Communication'],
+  scores: [
+    {{ result.categories.academics.score }},
+    {{ result.categories.technical.score }},
+    {{ result.categories.experience.score }},
+    {{ result.categories.aptitude.score }},
+    {{ result.categories.communication.score }}
+  ]
+};
+window.HISTORY_DATA = {
+  labels: [{% for h in history %}"{{ h.recorded_at.strftime('%d %b') }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  scores: [{% for h in history %}{{ h.total_score }}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+initStudentCharts();
+animateScoreRing({{ result.total_score }});
+animateCounter(document.getElementById('scoreNum'), {{ result.total_score }});
+</script>
+{% endblock %}
